@@ -1,8 +1,9 @@
 dist: xenial
 
-
 language: python
 cache: pip
+notifications:
+  email: false
 
 python:
 - 3.8.1
