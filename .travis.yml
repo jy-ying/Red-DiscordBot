@@ -82,7 +82,7 @@ addons:
   sonarcloud:
     organization: jy-ying  
     token:
-      secure: $SONAR_TOKEN
+      secure: ••••••••••••••••
 
 language: python
 
