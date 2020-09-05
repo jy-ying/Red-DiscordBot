@@ -95,7 +95,6 @@ env:
 
 install:
 - pip install --upgrade pip tox
-- pip install --upgrade pip tox
 - pip install pytest-mock
 - pip install -e .
 - pip install ."[tests]"
