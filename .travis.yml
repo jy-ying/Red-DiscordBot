@@ -75,20 +75,25 @@
 #   - ./cc-test-reporter sum-coverage coverage/codeclimate.*.json -p 2                  # Sum both coverage parts into coverage/codeclimate.json
 #   - if [[ "$TRAVIS_TEST_RESULT" == 0 ]]; then ./cc-test-reporter upload-coverage --a199ef9c62ad2ca8c1f520bfe950eeeda67ed4ad08ece334514a0244a1da9ff2; fi  # Upload coverage/codeclimate.json
   
- dist: xenial
+
+dist: xenial
 
 addons: 
   sonarcloud:
     organization: jy-ying  
     token:
       secure: $SONAR_TOKEN
+
 language: python
+
 cache: pip
+
 notifications:
   email: false
 
 python:
 - 3.8.1
+
 env:
   global:
     - PIPENV_IGNORE_VIRTUALENVS=1
