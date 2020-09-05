@@ -1,103 +1,25 @@
-dist: xenial
-
-addons: 
-  sonarcloud:
-    organization: jy-ying 
-    token:
-      secure: $SONAR_TOKEN
-      
-language: python
-
-cache: pip
-notifications:
-  email: false
-
-python:
-- 3.8.1
-env:
-  global:
-    - PIPENV_IGNORE_VIRTUALENVS=1
-    - CC_TEST_REPORTER_ID=$TEST_REPORTER_ID
-    - CODECLIMATE_REPO_TOKEN=[token]
-    - BUILD_TAG=$TRAVIS_TAG
-
-install:
-- pip install --upgrade pip tox
-- pip install pytest-mock
-- pip install pytest-asyncio
-- pip install -e .
-- pip install ."[tests]"
-- pip install coverage
-- pip install setuptools
-- pip install codeclimate-test-reporter
-- pip install pytest-cov
-
-before_script:
-  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-  - chmod +x ./cc-test-reporter
-  - ./cc-test-reporter before-build
-  
-script:
-- tox
-# - sonar-scanner
-- py.test --cov=tests tests/
-- coverage help
-- coverage xml
- 
-jobs:
-  include:
-    - env: TOXENV=py
-    - env: TOXENV=docs
-    - env: TOXENV=style
-    - stage: Crowdin Deployment
-      if: tag IS present OR ENV(BUILD_CROWDIN)
-      python: 3.8.1
-      env:
-        - DEPLOYING=true
-        - TOXENV=py38
-      before_deploy:
-      - curl https://artifacts.crowdin.com/repo/GPG-KEY-crowdin | sudo apt-key add -
-      - echo "deb https://artifacts.crowdin.com/repo/deb/ /" | sudo tee -a /etc/apt/sources.list
-      - sudo apt-get update -qq
-      - sudo apt-get install -y crowdin
-      - pip install redgettext==3.1
-      deploy:
-      - provider: script
-        script: make upload_translations
-        skip_cleanup: true
-        on:
-          repo: Cog-Creators/Red-DiscordBot
-          tags: true
-        
-after_script:
-  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
-  - ./cc-test-reporter format-coverage -t simplecov -o coverage/codeclimate.backend.json coverage/backend/.resultset.json # Format backend coverage
-  - ./cc-test-reporter format-coverage -t lcov -o coverage/codeclimate.frontend.json coverage/frontend/lcov.info  # Format frontend coverage
-  - ./cc-test-reporter sum-coverage coverage/codeclimate.*.json -p 2                  # Sum both coverage parts into coverage/codeclimate.json
-  - if [[ "$TRAVIS_TEST_RESULT" == 0 ]]; then ./cc-test-reporter upload-coverage --a199ef9c62ad2ca8c1f520bfe950eeeda67ed4ad08ece334514a0244a1da9ff2; fi  # Upload coverage/codeclimate.json
-  
-
 # dist: xenial
 
 # addons: 
 #   sonarcloud:
-#     organization: jy-ying  
+#     organization: jy-ying 
 #     token:
-#       secure: ••••••••••••••••
-
+#       secure: $SONAR_TOKEN
+      
 # language: python
 
 # cache: pip
-
 # notifications:
 #   email: false
 
 # python:
 # - 3.8.1
-
 # env:
 #   global:
 #     - PIPENV_IGNORE_VIRTUALENVS=1
+#     - CC_TEST_REPORTER_ID=$TEST_REPORTER_ID
+#     - CODECLIMATE_REPO_TOKEN=[token]
+#     - BUILD_TAG=$TRAVIS_TAG
 
 # install:
 # - pip install --upgrade pip tox
@@ -110,9 +32,14 @@ after_script:
 # - pip install codeclimate-test-reporter
 # - pip install pytest-cov
 
+# before_script:
+#   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+#   - chmod +x ./cc-test-reporter
+#   - ./cc-test-reporter before-build
+  
 # script:
 # - tox
-# - sonar-scanner
+# # - sonar-scanner
 # - py.test --cov=tests tests/
 # - coverage help
 # - coverage xml
@@ -141,4 +68,77 @@ after_script:
 #         on:
 #           repo: Cog-Creators/Red-DiscordBot
 #           tags: true
+        
+# after_script:
+#   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+#   - ./cc-test-reporter format-coverage -t simplecov -o coverage/codeclimate.backend.json coverage/backend/.resultset.json # Format backend coverage
+#   - ./cc-test-reporter format-coverage -t lcov -o coverage/codeclimate.frontend.json coverage/frontend/lcov.info  # Format frontend coverage
+#   - ./cc-test-reporter sum-coverage coverage/codeclimate.*.json -p 2                  # Sum both coverage parts into coverage/codeclimate.json
+#   - if [[ "$TRAVIS_TEST_RESULT" == 0 ]]; then ./cc-test-reporter upload-coverage --a199ef9c62ad2ca8c1f520bfe950eeeda67ed4ad08ece334514a0244a1da9ff2; fi  # Upload coverage/codeclimate.json
+  
+
+dist: xenial
+
+addons: 
+  sonarcloud:
+    organization: jy-ying  
+    token:
+      secure: ••••••••••••••••
+
+language: python
+
+cache: pip
+
+notifications:
+  email: false
+
+python:
+- 3.8.1
+
+env:
+  global:
+    - PIPENV_IGNORE_VIRTUALENVS=1
+
+install:
+- pip install --upgrade pip tox
+- pip install pytest-mock
+- pip install pytest-asyncio
+- pip install -e .
+- pip install ."[tests]"
+- pip install coverage
+- pip install setuptools
+- pip install codeclimate-test-reporter
+- pip install pytest-cov
+
+script:
+- tox
+- py.test --cov=tests tests/
+- coverage help
+- coverage xml
+- sonar-scanner
+ 
+jobs:
+  include:
+    - env: TOXENV=py
+    - env: TOXENV=docs
+    - env: TOXENV=style
+    - stage: Crowdin Deployment
+      if: tag IS present OR ENV(BUILD_CROWDIN)
+      python: 3.8.1
+      env:
+        - DEPLOYING=true
+        - TOXENV=py38
+      before_deploy:
+      - curl https://artifacts.crowdin.com/repo/GPG-KEY-crowdin | sudo apt-key add -
+      - echo "deb https://artifacts.crowdin.com/repo/deb/ /" | sudo tee -a /etc/apt/sources.list
+      - sudo apt-get update -qq
+      - sudo apt-get install -y crowdin
+      - pip install redgettext==3.1
+      deploy:
+      - provider: script
+        script: make upload_translations
+        skip_cleanup: true
+        on:
+          repo: Cog-Creators/Red-DiscordBot
+          tags: true
 
