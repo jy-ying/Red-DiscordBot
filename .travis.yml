@@ -32,7 +32,8 @@ install:
 
 script:
 - tox
-- sonar-scanner
+# - sonar-scanner
+- py.test --cov=tests tests/
 - coverage run -m unittest discover
 - coverage help
 - coverage xml
