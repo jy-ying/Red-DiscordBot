@@ -1,44 +1,49 @@
 dist: xenial
 
-language: python
-cache: pip
-
 addons: 
   sonarcloud:
     organization: jy-ying 
     token:
       secure: ••••••••••••••••
-env:
-  global:
-    - CC_TEST_REPORTER_ID=$TEST_REPORTER_ID
-    
+language: python
+cache: pip
+notifications:
+  email: false
+
 python:
 - 3.8.1
-  
-  install:
-  - pip install -e .
-  - pip install ."[tests]"
-  - pip install coverage
-  - pip install codeclimate-test-reporter
-  - pip install pytest-cov
+env:
+  global:
+    - PIPENV_IGNORE_VIRTUALENVS=1
 
-before_script:
-  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-  - chmod +x ./cc-test-reporter
-  - ./cc-test-reporter before-build
+install:
+- pip install --upgrade pip tox
 
 script:
-  - ./publish_via_travis.sh
-  - py.test --cov=tests tests/
-  - coverage xml
-  - sonar-scanner
-  
-after_script:
-  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
-  - ./cc-test-reporter format-coverage -t coverage.py
-  - ./cc-test-reporter upload-coverage
-#   - ./cc-test-reporter format-coverage -t simplecov -o coverage/codeclimate.backend.json coverage/backend/.resultset.json # Format backend coverage
-#   - ./cc-test-reporter format-coverage -t lcov -o coverage/codeclimate.frontend.json coverage/frontend/lcov.info  # Format frontend coverage
-#   - ./cc-test-reporter sum-coverage coverage/codeclimate.*.json -p 2                  # Sum both coverage parts into coverage/codeclimate.json
-#   - if [[ "$TRAVIS_TEST_RESULT" == 0 ]]; then ./cc-test-reporter upload-coverage --a199ef9c62ad2ca8c1f520bfe950eeeda67ed4ad08ece334514a0244a1da9ff2; fi  # Upload coverage/codeclimate.json
-
+- tox
+- sonar-scanner
+ 
+jobs:
+  include:
+    - env: TOXENV=py
+    - env: TOXENV=docs
+    - env: TOXENV=style
+    - stage: Crowdin Deployment
+      if: tag IS present OR ENV(BUILD_CROWDIN)
+      python: 3.8.1
+      env:
+        - DEPLOYING=true
+        - TOXENV=py38
+      before_deploy:
+      - curl https://artifacts.crowdin.com/repo/GPG-KEY-crowdin | sudo apt-key add -
+      - echo "deb https://artifacts.crowdin.com/repo/deb/ /" | sudo tee -a /etc/apt/sources.list
+      - sudo apt-get update -qq
+      - sudo apt-get install -y crowdin
+      - pip install redgettext==3.1
+      deploy:
+      - provider: script
+        script: make upload_translations
+        skip_cleanup: true
+        on:
+          repo: Cog-Creators/Red-DiscordBot
+          tags: true
